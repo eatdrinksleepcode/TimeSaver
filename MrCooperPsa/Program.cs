@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,13 +26,23 @@ namespace MrCooperPsa {
             //options.AddArgument("user-data-dir=/Users/user/Library/Application Support/Google/Chrome");
             //options.AddArgument("--profile-directory=Default");
             var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            //dynamicsDriver = new ChromeDriver(chromeDriverDir, options);
-            //dynamicsDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
-            timeworksDriver = new ChromeDriver(chromeDriverDir, options);
-            timeworksDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
+            dynamicsDriver = new ChromeDriver(chromeDriverDir, options);
+            dynamicsDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
+            //timeworksDriver = new ChromeDriver(chromeDriverDir, options);
+            //timeworksDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         private void DoStuff() {
+            NavigateToDynamicsTimeEntries();
+            //ExtractEntriesFromTimeworks();
+
+            ExportEntriesToPSA(new[] {
+                Tuple.Create(DateTimeOffset.Parse("2/6/2018"), TimeSpan.FromHours(4)),
+                Tuple.Create(DateTimeOffset.Parse("2/8/2018"), TimeSpan.FromMinutes(65))
+            });
+        }
+
+        private void ExtractEntriesFromTimeworks() {
             timeworksDriver.Navigate().GoToUrl("https://thoughtworks.lightning.force.com/c/TimecardApp.app");
 
             var twUsername = System.Environment.GetEnvironmentVariable("TW_USERNAME");
@@ -67,11 +78,9 @@ namespace MrCooperPsa {
                 dateDisplayDiv.parentNode.insertBefore(exportDiv, dateDisplayDiv);
             ");
 
-            while (true) {
-                WaitForExport();
-            }
-
-            //NavigateToDynamicsTimeEntries();
+            //while (true) {
+            //    WaitForExport();
+            //}
         }
 
         private void WaitForExport() {
@@ -102,42 +111,107 @@ namespace MrCooperPsa {
 
             Console.WriteLine($"Found {timecards.Count} timecards");
 
+            var entries = Enumerable.Empty<Tuple<DateTimeOffset, TimeSpan>>();
+
             foreach (var timecard in timecards) {
+                IEnumerable<Tuple<DateTimeOffset, TimeSpan>> timecardEntries = Enumerable.Empty<Tuple<DateTimeOffset, TimeSpan>>();
                 char[] digits = Enumerable.Range(0, 10).Select(i => (char)('0' + i)).ToArray();
                 string timecardIdValue = timecard.GetAttribute("id");
                 var id = timecardIdValue.Substring(timecardIdValue.Split(digits)[0].Length);
                 Console.WriteLine($"Inspecting timecard {id}");
                 var timecardHeader = timecard.FindElement(By.ClassName("header-name-for-timecard-entry"));
-                if(timecardHeader.TagName == "span") {
-                    continue;
-                }
-                var timecardAccount = timecardHeader.FindElement(By.TagName("div")).FindElement(By.ClassName("project-assignment-text")).Text;
-                if (timecardAccount.Contains("Mr. Cooper")) {
-                    Console.WriteLine($"Exporting timecard {id} for {timecardAccount}");
-                    var entries = Days.Select((d, i) => {
-                        var inputId = $"{d}{id}1";
-                        Console.WriteLine($"Finding input {inputId}");
-                        var input = timeworksDriver.FindElement(By.Id(inputId));
-                        Console.WriteLine($"Found input {inputId}");
-                        var value = input.GetAttribute("value");
-                        Console.WriteLine($"{inputId}.value = {value}");
-                        if (!string.IsNullOrEmpty(value)) {
-                            var hours = decimal.Parse(value);
-                            var day = startDate.AddDays(i);
-                            Console.WriteLine($"{day.ToString("d")} = {hours} hours");
-                            return Tuple.Create(day, hours);
-                        }
-                        return null;
-                    }).Where(x => null != x).Where(x => x.Item2 > 0);
-                    foreach (var entry in entries) {
-                        Console.WriteLine($"{entry.Item1.ToString("d")} = {entry.Item2} hours");
+                if (timecardHeader.TagName != "span") {
+                    var timecardAccount = timecardHeader.FindElement(By.TagName("div")).FindElement(By.ClassName("project-assignment-text")).Text;
+                    if (timecardAccount.Contains("Mr. Cooper")) {
+                        Console.WriteLine($"Exporting timecard {id} for {timecardAccount}");
+                        timecardEntries = Days.Select((d, i) => {
+                            var inputId = $"{d}{id}1";
+                            Console.WriteLine($"Finding input {inputId}");
+                            var input = timeworksDriver.FindElement(By.Id(inputId));
+                            Console.WriteLine($"Found input {inputId}");
+                            var value = input.GetAttribute("value");
+                            Console.WriteLine($"{inputId}.value = {value}");
+                            if (!string.IsNullOrEmpty(value)) {
+                                var hours = double.Parse(value);
+                                var day = startDate.AddDays(i);
+                                Console.WriteLine($"{day.ToString("d")} = {hours} hours");
+                                return Tuple.Create(day, TimeSpan.FromHours(hours));
+                            }
+                            return null;
+                        }).Where(x => null != x).Where(x => x.Item2 != TimeSpan.Zero);
+                    } else {
+                        Console.WriteLine($"Skipping timecard {id}");
                     }
-                } else {
-                    Console.WriteLine($"Skipping timecard {id}");
                 }
+                entries = entries.Concat(timecardEntries);
             }
 
+            ExportEntriesToPSA(entries);
+
             Console.WriteLine("Done exporting");
+        }
+
+        const string dtoToJsDateFormat = "yyyy, M - 1, d";
+
+        private void ExportEntriesToPSA(IEnumerable<Tuple<DateTimeOffset, TimeSpan>> entries) {
+            var newButtonId = "msdyn_timeentry|NoRelationship|HomePageGrid|Mscrm.HomepageGrid.msdyn_timeentry.NewRecord";
+            bool refresh = true;
+
+            var jsDynamicsDriver = ((IJavaScriptExecutor)dynamicsDriver);
+
+            foreach (var entry in entries) {
+                ((IJavaScriptExecutor)dynamicsDriver).ExecuteScript(@"
+                    document.getElementById('navBarOverlay').style.display = 'none';
+                ");
+
+                var newButton = dynamicsDriver.FindElement(By.Id(newButtonId)).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+                newButton.Click();
+                newButtonId = "msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.NewRecord";
+
+                if (refresh) {
+                    dynamicsDriver.Navigate().Refresh();
+                    refresh = false;
+                }
+                dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+
+                jsDynamicsDriver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Item1.ToString(dtoToJsDateFormat)}));
+                ");
+                dynamicsDriver.SwitchTo().Frame(0);
+                dynamicsDriver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);
+                dynamicsDriver.SwitchTo().DefaultContent();
+                jsDynamicsDriver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
+                ");
+                jsDynamicsDriver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
+                        id: ""{{F1FBC909-CC8C-E711-811D-E0071B66DF51}}"",
+                        type: ""10114"",
+                        name: ""Home Intelligence""
+                    }}]);
+                ");
+               jsDynamicsDriver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
+                        id: ""{{22E5EC7A-86EF-46DF-B392-A97AFD816232}}"",
+                        type: ""10119"",
+                        name: ""4. Development""
+                    }}]);
+                ");
+                jsDynamicsDriver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Item2.TotalMinutes});
+                ");
+
+                new WebDriverWait(dynamicsDriver, TimeSpan.FromSeconds(10)).Until(d => {
+                    return ((IJavaScriptExecutor)dynamicsDriver).ExecuteScript($@"
+                        return frames[0].Xrm.Page.getAttribute('msdyn_resourcecategory').getValue() != null;
+                    ");
+                });
+
+                var saveButton = dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+                saveButton.Click();
+
+                dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|msdyn.msdyn_timeentry.Form.Submit"));
+            }
         }
 
         static string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };

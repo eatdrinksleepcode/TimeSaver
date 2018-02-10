@@ -28,18 +28,13 @@ namespace MrCooperPsa {
             var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             dynamicsDriver = new ChromeDriver(chromeDriverDir, options);
             dynamicsDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
-            //timeworksDriver = new ChromeDriver(chromeDriverDir, options);
-            //timeworksDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
+            timeworksDriver = new ChromeDriver(chromeDriverDir, options);
+            timeworksDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         private void DoStuff() {
             NavigateToDynamicsTimeEntries();
-            //ExtractEntriesFromTimeworks();
-
-            ExportEntriesToPSA(new[] {
-                Tuple.Create(DateTimeOffset.Parse("2/6/2018"), TimeSpan.FromHours(4)),
-                Tuple.Create(DateTimeOffset.Parse("2/8/2018"), TimeSpan.FromMinutes(65))
-            });
+            ExtractEntriesFromTimeworks();
         }
 
         private void ExtractEntriesFromTimeworks() {
@@ -78,9 +73,9 @@ namespace MrCooperPsa {
                 dateDisplayDiv.parentNode.insertBefore(exportDiv, dateDisplayDiv);
             ");
 
-            //while (true) {
-            //    WaitForExport();
-            //}
+            while (true) {
+                WaitForExport();
+            }
         }
 
         private void WaitForExport() {
@@ -212,6 +207,8 @@ namespace MrCooperPsa {
 
                 dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|msdyn.msdyn_timeentry.Form.Submit"));
             }
+
+            dynamicsDriver.FindElement(By.Id("Tabmsdyn_timeentry-main")).Click();
         }
 
         static string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
@@ -252,7 +249,7 @@ namespace MrCooperPsa {
 
         public void Dispose() {
             dynamicsDriver.Dispose();
-            //timeworksDriver.Dispose();
+            timeworksDriver.Dispose();
         }
     }
 }

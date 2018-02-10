@@ -103,7 +103,9 @@ namespace MrCooperPsa {
             Console.WriteLine($"Found {timecards.Count} timecards");
 
             foreach (var timecard in timecards) {
-                var id = timecard.GetAttribute("id").Substring("timecardInfo".Length);
+                char[] digits = Enumerable.Range(0, 10).Select(i => (char)('0' + i)).ToArray();
+                string timecardIdValue = timecard.GetAttribute("id");
+                var id = timecardIdValue.Substring(timecardIdValue.Split(digits)[0].Length);
                 Console.WriteLine($"Inspecting timecard {id}");
                 var timecardHeader = timecard.FindElement(By.ClassName("header-name-for-timecard-entry"));
                 if(timecardHeader.TagName == "span") {

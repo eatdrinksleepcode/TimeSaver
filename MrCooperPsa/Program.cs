@@ -26,6 +26,9 @@ namespace MrCooperPsa {
                 RedirectStandardOutput = true
             });
             process.WaitForExit();
+            if(process.ExitCode != 0) {
+                return null;
+            }
             var sizes = ReadLines(process.StandardOutput)
                             .Where(line => line.Contains("Resolution"))
                             .SelectMany(line => line.Trim().Split(" ")

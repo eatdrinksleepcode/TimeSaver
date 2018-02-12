@@ -38,14 +38,19 @@ namespace MrCooperPsa {
         public void AddExportElementToPage() {
             var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
             Driver.ExecuteScript(@"
-                const exportDiv = document.createElement(""span"");
-                exportDiv.innerText = ""Export To PSA"";
-                exportDiv.style.cssText = ""padding-right: 10px"";
-                exportDiv.onclick = function() {
-                    document.exportToPSA = true;
-                };
                 const dateDisplayDiv = document.getElementsByClassName(""date-display"")[0];
-                dateDisplayDiv.parentNode.insertBefore(exportDiv, dateDisplayDiv);
+                dateDisplayDiv.style.cssText = dateDisplayDiv.style.cssText + ""; position: relative"";
+
+                const exportButton = document.createElement(""img"");
+                exportButton.id = ""export-to-psa"";
+                exportButton.src = ""https://media.glassdoor.com/sql/1748022/mr-cooper-squarelogo-1503336704472.png"";
+                exportButton.alt = ""Export To PSA"";
+                exportButton.style.cssText = ""position: absolute; left: -45px; width: 40px"";
+                exportButton.onclick = function() {
+                    document.exportToPSA = true;
+                    return false;
+                };
+                dateDisplayDiv.insertBefore(exportButton);
             ");
         }
 

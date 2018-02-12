@@ -5,18 +5,10 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
 namespace MrCooperPsa {
-    public class PsaDriver<TDriver> : IDisposable where TDriver : IWebDriver, IJavaScriptExecutor {
-        private TDriver dynamicsDriver;
+    public class PsaDriver<TDriver> : DriverWrapper<TDriver> where TDriver : IWebDriver, IJavaScriptExecutor {
 
-        public PsaDriver(TDriver driver) {
-            this.dynamicsDriver = driver;
-            this.dynamicsDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
-        }
-
-        public void Dispose() {
-            if(null != dynamicsDriver) {
-                dynamicsDriver.Dispose();
-            }
+        public PsaDriver(TDriver driver) : base(driver) {
+            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         const string dtoToJsDateFormat = "yyyy, M - 1, d";
@@ -26,66 +18,66 @@ namespace MrCooperPsa {
             bool refresh = true;
 
             foreach (var entry in entries) {
-                dynamicsDriver.ExecuteScript(@"
+                Driver.ExecuteScript(@"
                     document.getElementById('navBarOverlay').style.display = 'none';
                 ");
 
-                var newButton = dynamicsDriver.FindElement(By.Id(newButtonId)).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+                var newButton = Driver.FindElement(By.Id(newButtonId)).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
                 newButton.Click();
                 newButtonId = "msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.NewRecord";
 
                 if (refresh) {
-                    dynamicsDriver.Navigate().Refresh();
+                    Driver.Navigate().Refresh();
                     refresh = false;
                 }
-                dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+                Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
 
-                dynamicsDriver.ExecuteScript($@"
+                Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Item1.ToString(dtoToJsDateFormat)}));
                 ");
                 Thread.Sleep(1000);
-                dynamicsDriver.SwitchTo().Frame(0);
-                dynamicsDriver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);
-                dynamicsDriver.SwitchTo().DefaultContent();
+                Driver.SwitchTo().Frame(0);
+                Driver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);
+                Driver.SwitchTo().DefaultContent();
                 Thread.Sleep(1000);
-                dynamicsDriver.ExecuteScript($@"
+                Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
                 ");
-                dynamicsDriver.ExecuteScript($@"
+                Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
                         id: ""{{F1FBC909-CC8C-E711-811D-E0071B66DF51}}"",
                         type: ""10114"",
                         name: ""Home Intelligence""
                     }}]);
                 ");
-                dynamicsDriver.ExecuteScript($@"
+                Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
                         id: ""{{22E5EC7A-86EF-46DF-B392-A97AFD816232}}"",
                         type: ""10119"",
                         name: ""4. Development""
                     }}]);
                 ");
-                dynamicsDriver.ExecuteScript($@"
+                Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Item2.TotalMinutes});
                 ");
 
-                new WebDriverWait(dynamicsDriver, TimeSpan.FromSeconds(10)).Until(d => {
-                    return ((IJavaScriptExecutor)dynamicsDriver).ExecuteScript($@"
+                WaitUntil(TimeSpan.FromSeconds(10), () => {
+                    return Driver.ExecuteScript($@"
                         return frames[0].Xrm.Page.getAttribute('msdyn_resourcecategory').getValue() != null;
                     ");
                 });
 
-                var saveButton = dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
+                var saveButton = Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
                 saveButton.Click();
 
-                dynamicsDriver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|msdyn.msdyn_timeentry.Form.Submit"));
+                Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|msdyn.msdyn_timeentry.Form.Submit"));
             }
 
-            dynamicsDriver.FindElement(By.Id("Tabmsdyn_timeentry-main")).Click();
+            Driver.FindElement(By.Id("Tabmsdyn_timeentry-main")).Click();
         }
 
         public void NavigateToDynamicsTimeEntries() {
-            dynamicsDriver.Navigate().GoToUrl("https://cooper.crm.dynamics.com/main.aspx");
+            Driver.Navigate().GoToUrl("https://cooper.crm.dynamics.com/main.aspx");
 
             var mrCooperEmail = System.Environment.GetEnvironmentVariable("MRCOOPER_EMAIL");
             var mrCooperPassword = System.Environment.GetEnvironmentVariable("MRCOOPER_PASSWORD");
@@ -93,28 +85,28 @@ namespace MrCooperPsa {
             if (!string.IsNullOrEmpty(mrCooperEmail)) {
                 Console.WriteLine($"Mr Cooper email found ({mrCooperEmail}). Logging in...");
 
-                var emailInput = dynamicsDriver.FindElement(By.Name("loginfmt"));
+                var emailInput = Driver.FindElement(By.Name("loginfmt"));
                 emailInput.SendKeys(mrCooperEmail);
 
-                var nextButton = dynamicsDriver.FindElement(By.Id("idSIButton9"));
+                var nextButton = Driver.FindElement(By.Id("idSIButton9"));
                 nextButton.Click();
 
-                var passwordInput = dynamicsDriver.FindElement(By.Id("passwordInput"));
+                var passwordInput = Driver.FindElement(By.Id("passwordInput"));
                 passwordInput.SendKeys(mrCooperPassword);
 
-                var submitButton = dynamicsDriver.FindElement(By.Id("submitButton"));
+                var submitButton = Driver.FindElement(By.Id("submitButton"));
                 submitButton.Click();
 
-                var dontSaveId = dynamicsDriver.FindElement(By.Id("idBtn_Back"));
+                var dontSaveId = Driver.FindElement(By.Id("idBtn_Back"));
                 dontSaveId.Click();
             } else {
                 Console.WriteLine("Mr Cooper email not found. Please log in.");
             }
 
-            var projectServiceArrow = dynamicsDriver.FindElement(By.Id("TabSI")).FindElement(By.TagName("a"));
+            var projectServiceArrow = Driver.FindElement(By.Id("TabSI")).FindElement(By.TagName("a"));
             projectServiceArrow.Click();
 
-            var timeEntriesLink = dynamicsDriver.FindElement(By.Id("msdyn_timeentry"));
+            var timeEntriesLink = Driver.FindElement(By.Id("msdyn_timeentry"));
             timeEntriesLink.Click();
         }
     }

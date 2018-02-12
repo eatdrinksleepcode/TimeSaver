@@ -2,33 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
 
 namespace MrCooperPsa {
-    public class TimeworksDriver<TDriver> : IDisposable where TDriver : IWebDriver, IJavaScriptExecutor {
+    public class TimeworksDriver<TDriver> : DriverWrapper<TDriver> where TDriver : IWebDriver, IJavaScriptExecutor {
         private static readonly string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
-        private readonly TDriver timeworksDriver;
-
-        public TimeworksDriver(TDriver driver) {
-            this.timeworksDriver = driver;
-            this.timeworksDriver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
-        }
-
-        public void Dispose() {
-            if(null != timeworksDriver) {
-                timeworksDriver.Dispose();
-            }
-        }
-
-        private T WaitUntil<T>(TimeSpan timeout, Func<T> until) {
-            return new DefaultWait<TDriver>(timeworksDriver) {
-                Timeout = timeout
-            }.Until(d => until());
+        public TimeworksDriver(TDriver driver) : base(driver) {
+            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         public void NavigateToTimeworks() {
-            timeworksDriver.Navigate().GoToUrl("https://thoughtworks.lightning.force.com/c/TimecardApp.app");
+            Driver.Navigate().GoToUrl("https://thoughtworks.lightning.force.com/c/TimecardApp.app");
         }
 
         public void SignInToTimeworks() {
@@ -38,13 +22,13 @@ namespace MrCooperPsa {
             if (!string.IsNullOrEmpty(twUsername)) {
                 Console.WriteLine($"TW username found ({twUsername}). Logging in...");
 
-                var usernameInput = timeworksDriver.FindElement(By.Id("okta-signin-username"));
+                var usernameInput = Driver.FindElement(By.Id("okta-signin-username"));
                 usernameInput.SendKeys(twUsername);
 
-                var passwordInput = timeworksDriver.FindElement(By.Id("okta-signin-password"));
+                var passwordInput = Driver.FindElement(By.Id("okta-signin-password"));
                 passwordInput.SendKeys(twPassword);
 
-                var signInButton = timeworksDriver.FindElement(By.Id("okta-signin-submit"));
+                var signInButton = Driver.FindElement(By.Id("okta-signin-submit"));
                 signInButton.Click();
             } else {
                 Console.WriteLine($"TW username not found. Please log in.");
@@ -52,8 +36,8 @@ namespace MrCooperPsa {
         }
 
         public void AddExportElementToPage() {
-            var dateDisplay = timeworksDriver.FindElement(By.ClassName("date-display"));
-            timeworksDriver.ExecuteScript(@"
+            var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
+            Driver.ExecuteScript(@"
                 const exportDiv = document.createElement(""span"");
                 exportDiv.innerText = ""Export To PSA"";
                 exportDiv.style.cssText = ""padding-right: 10px"";
@@ -69,7 +53,7 @@ namespace MrCooperPsa {
             Console.WriteLine("Waiting for export...");
             var result = WaitUntil(TimeSpan.FromDays(1), () => {
                 Console.WriteLine("Checking for export...");
-                return (bool)timeworksDriver.ExecuteScript(@"
+                return (bool)Driver.ExecuteScript(@"
                     if(document.exportToPSA) {
                         document.exportToPSA = false;
                         return true;
@@ -78,7 +62,7 @@ namespace MrCooperPsa {
                 ");
             });
 
-            var dateDisplay = timeworksDriver.FindElement(By.ClassName("date-display"));
+            var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
 
             var startDateParts = dateDisplay.Text.Split(" - ").First().Split(" ");
             var startDate = new DateTimeOffset(2018, 1, int.Parse(startDateParts[0]), 0, 0, 0, TimeSpan.Zero);
@@ -88,7 +72,7 @@ namespace MrCooperPsa {
 
             Console.WriteLine($"Exporting starting at {startDate.ToString("d")}");
 
-            var timecards = timeworksDriver.FindElements(By.ClassName("timecard-entry"));
+            var timecards = Driver.FindElements(By.ClassName("timecard-entry"));
 
             Console.WriteLine($"Found {timecards.Count} timecards");
 
@@ -108,7 +92,7 @@ namespace MrCooperPsa {
                         timecardEntries = Days.Select((d, i) => {
                             var inputId = $"{d}{id}1";
                             Console.WriteLine($"Finding input {inputId}");
-                            var input = timeworksDriver.FindElement(By.Id(inputId));
+                            var input = Driver.FindElement(By.Id(inputId));
                             Console.WriteLine($"Found input {inputId}");
                             var value = input.GetAttribute("value");
                             Console.WriteLine($"{inputId}.value = {value}");

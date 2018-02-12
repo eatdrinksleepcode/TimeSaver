@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Remote;
@@ -170,9 +171,11 @@ namespace MrCooperPsa {
                 jsDynamicsDriver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Item1.ToString(dtoToJsDateFormat)}));
                 ");
+                Thread.Sleep(1000);
                 dynamicsDriver.SwitchTo().Frame(0);
                 dynamicsDriver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);
                 dynamicsDriver.SwitchTo().DefaultContent();
+                Thread.Sleep(1000);
                 jsDynamicsDriver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
                 ");

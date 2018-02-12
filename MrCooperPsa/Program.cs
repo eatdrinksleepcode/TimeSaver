@@ -58,8 +58,6 @@ namespace MrCooperPsa {
                 Console.WriteLine($"TW username not found. Please log in.");
             }
 
-            timeworksDriver.FindElement(By.Id("timecardInfo0"));
-
             var dateDisplay = timeworksDriver.FindElement(By.ClassName("date-display"));
             var timeworksJS = (IJavaScriptExecutor)timeworksDriver;
             timeworksJS.ExecuteScript(@"

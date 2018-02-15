@@ -4,11 +4,10 @@ using System.Linq;
 using OpenQA.Selenium;
 
 namespace MrCooperPsa {
-    public class TimeworksDriver<TDriver> : DriverWrapper<TDriver> where TDriver : IWebDriver, IJavaScriptExecutor {
+    public class TimeworksDriver<TDriver> : DriverWrapper<TDriver>, ITimeworksDriver where TDriver : IWebDriver, IJavaScriptExecutor {
         private static readonly string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 
         public TimeworksDriver(TDriver driver) : base(driver) {
-            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         public void NavigateToTimeworks() {

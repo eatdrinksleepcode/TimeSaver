@@ -5,10 +5,9 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
 namespace MrCooperPsa {
-    public class PsaDriver<TDriver> : DriverWrapper<TDriver> where TDriver : IWebDriver, IJavaScriptExecutor {
+    public class PsaDriver<TDriver> : DriverWrapper<TDriver>, IPsaDriver where TDriver : IWebDriver, IJavaScriptExecutor {
 
         public PsaDriver(TDriver driver) : base(driver) {
-            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         const string dtoToJsDateFormat = "yyyy, M - 1, d";

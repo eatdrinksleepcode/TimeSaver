@@ -6,11 +6,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Firefox;
 
 namespace MrCooperPsa {
     class Program : IDisposable {
-        private PsaDriver<ChromeDriver> dynamicsDriver;
-        private TimeworksDriver<ChromeDriver> timeworksDriver;
+        private IPsaDriver dynamicsDriver;
+        private ITimeworksDriver timeworksDriver;
 
         static void Main(string[] args) {
             using (var p = new Program()) {
@@ -51,13 +52,10 @@ namespace MrCooperPsa {
             }
         }
 
-        public Program() {
-            var options = new ChromeOptions();
-            //options.AddArgument("user-data-dir=/Users/user/Library/Application Support/Google/Chrome");
-            //options.AddArgument("--profile-directory=Default");
-            var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
-            timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
+        private Program() {
+
+            InitializeFirefoxDrivers();
+//            InitializeChromeDrivers();
 
             var screenSize = FindScreenSize();
 
@@ -70,6 +68,22 @@ namespace MrCooperPsa {
                 timeworksDriver.SetScreenSize(position, size);
                 dynamicsDriver.SetScreenSize(new Point(middleWidth, 0), size);
             }
+        }
+
+        private void InitializeFirefoxDrivers() {
+            System.IO.Directory.SetCurrentDirectory(Path.GetDirectoryName(typeof(Program).Assembly.Location));
+            dynamicsDriver = new PsaDriver<FirefoxDriver>(new FirefoxDriver());
+            timeworksDriver = new TimeworksDriver<FirefoxDriver>(new FirefoxDriver());
+        }
+
+        private void InitializeChromeDrivers() {
+            var options = new ChromeOptions();
+            //options.AddArgument("user-data-dir=/Users/user/Library/Application Support/Google/Chrome");
+            //options.AddArgument("--profile-directory=Default");
+
+            var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
+            timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
         }
 
         private void DoStuff() {

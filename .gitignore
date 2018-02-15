@@ -1,6 +1,8 @@
 # Autosave files
 *~
 
+.idea/
+
 # build
 [Oo]bj/
 [Bb]in/

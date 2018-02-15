@@ -98,8 +98,13 @@ namespace MrCooperPsa {
 
             while (true) {
                 var entries = timeworksDriver.WaitForExportedEntries();
-                dynamicsDriver.ExportEntriesToPSA(entries);
-                Console.WriteLine("Done exporting");
+                try {
+                    dynamicsDriver.ExportEntriesToPSA(entries);
+                    Console.WriteLine("Done exporting");
+                } catch(Exception ex) {
+                    Console.Error.WriteLine(ex);
+                    Console.WriteLine("Error occurred during export. Please return to the time entry screen in PSA before trying again.");
+                }
             }
         }
 

@@ -8,6 +8,7 @@ namespace MrCooperPsa {
 
         public DriverWrapper(TDriver driver) {
             this.Driver = driver;
+            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
         }
 
         public void Dispose() {

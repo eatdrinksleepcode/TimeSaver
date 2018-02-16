@@ -5,7 +5,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
@@ -56,8 +55,15 @@ namespace MrCooperPsa {
 
         private Program() {
 
-            InitializeFirefoxDrivers();
-//            InitializeChromeDrivers();
+            var browserPreference = System.Environment.GetEnvironmentVariable("TW_MRC_BROWSER");
+
+            if ("FIREFOX".Equals(browserPreference, StringComparison.OrdinalIgnoreCase)) {
+                InitializeFirefoxDrivers();
+            } else if("CHROME".Equals(browserPreference, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(browserPreference)) {
+                InitializeChromeDrivers();
+            } else {
+                throw new Exception($"Invalid environment variable 'TW_MRC_BROWSER': '{browserPreference}'");
+            }
 
             var screenSize = FindScreenSize();
 

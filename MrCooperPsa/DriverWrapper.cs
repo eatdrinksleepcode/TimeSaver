@@ -8,7 +8,7 @@ namespace MrCooperPsa {
 
         public DriverWrapper(TDriver driver) {
             this.Driver = driver;
-            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(30);
+            this.Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromDays(1);
         }
 
         public void Dispose() {
@@ -20,8 +20,9 @@ namespace MrCooperPsa {
         public TDriver Driver { get; }
 
         public void SetScreenSize(Point position, Size size) {
-            Driver.Manage().Window.Position = position;
-            Driver.Manage().Window.Size = size;
+            var window = Driver.Manage().Window;
+            window.Position = position;
+            window.Size = size;
         }
 
         protected T WaitUntil<T>(TimeSpan timeout, Func<T> until) {

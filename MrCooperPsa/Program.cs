@@ -5,6 +5,8 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 
@@ -71,10 +73,43 @@ namespace MrCooperPsa {
         }
 
         private void InitializeFirefoxDrivers() {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             System.IO.Directory.SetCurrentDirectory(Path.GetDirectoryName(typeof(Program).Assembly.Location));
-            dynamicsDriver = new PsaDriver<FirefoxDriver>(new FirefoxDriver());
-            timeworksDriver = new TimeworksDriver<FirefoxDriver>(new FirefoxDriver());
+            var firefoxProfileDir = FirefoxDefaultProfileDirectory;;
+            dynamicsDriver = new PsaDriver<FirefoxDriver>(CreateFirefoxDriver(firefoxProfileDir));
+            timeworksDriver = new TimeworksDriver<FirefoxDriver>(CreateFirefoxDriver(firefoxProfileDir));
         }
+
+        private static FirefoxDriver CreateFirefoxDriver(string firefoxProfileDir) {
+            var options = new FirefoxOptions();
+            options.LogLevel = FirefoxDriverLogLevel.Warn;
+            if (null != firefoxProfileDir) {
+                options.Profile = new FirefoxProfile(firefoxProfileDir);
+            }
+
+            try {
+                return new FirefoxDriver(options);
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine("Failed to create driver with default profile; is Firefox already running?");
+                Console.Error.WriteLine("Attempting to start driver with temp profile");
+                return new FirefoxDriver();
+            }
+        }
+
+        private static string FirefoxDefaultProfileDirectory {
+            get {
+                var profilesDir = Path.Combine(UserLibAppSupportDirectory, "Firefox", "Profiles");
+                var firefoxProfileDir = Directory.EnumerateDirectories(profilesDir).FirstOrDefault(p => p.EndsWith(".default"));
+                return firefoxProfileDir;
+            }
+        }
+
+        private static string UserLibAppSupportDirectory => Path.Combine(UserLibraryDirectory, "Application Support");
+
+        private static string UserLibraryDirectory => Path.Combine(UserProfileDirectory, "Library");
+
+        private static string UserProfileDirectory => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
         private void InitializeChromeDrivers() {
             var options = new ChromeOptions();

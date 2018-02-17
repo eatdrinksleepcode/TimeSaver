@@ -16,7 +16,7 @@ namespace MrCooperPsa {
 
         static void Main(string[] args) {
             using (var p = new Program()) {
-                p.DoStuff();
+                p.Run();
                 Console.ReadLine();
             }
         }
@@ -127,7 +127,7 @@ namespace MrCooperPsa {
             timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
         }
 
-        private void DoStuff() {
+        private void Run() {
             dynamicsDriver.NavigateToDynamicsTimeEntries();
             ExtractEntriesFromTimeworks();
         }

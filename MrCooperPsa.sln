@@ -1,7 +1,12 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MrCooperPsa", "MrCooperPsa\MrCooperPsa.csproj", "{44C281C3-64BA-4550-8E96-A8C613BD70D2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{2197A6C4-3AB6-4E4D-89B5-0BB549D5C6FD}"
+ProjectSection(SolutionItems) = preProject
+	.travis.yml = .travis.yml
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

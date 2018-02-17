@@ -1,0 +1,6 @@
+language: csharp
+os: osx
+mono: none
+dotnet: 2.0.0
+script:
+  - dotnet publish -c Release -r osx.10.12-x64

@@ -1,0 +1,14 @@
+<dict>
+<key>CFBundleName</key>
+<string>TimeSaver</string>
+<key>CFBundleDisplayName</key>
+<string>TimeSaver</string>
+<key>CFBundleIdentifer</key>
+<string>com.thoughtworks.TimeSaver</string>
+<key>CFBundleVersion</key>
+<string>0.0.1</string>
+<key>CFBundlePackageType</key>
+<string>APPL</string>
+<key>CFBundleExecutable</key>
+<string>MrCooperPSA</string>
+</dict>

@@ -4,6 +4,8 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <!-- CopyLocalLockFileAssemblies is necessary because FirefoxDriver only looks for geckoservice in the directory where its assembly is located -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RuntimeIdentifier>osx.10.12-x64</RuntimeIdentifier>
+    <PublishChromeDriver>true</PublishChromeDriver>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Selenium.Support" Version="3.9.1" />

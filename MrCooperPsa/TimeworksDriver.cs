@@ -53,7 +53,7 @@ namespace MrCooperPsa {
             ");
         }
 
-        public IEnumerable<Tuple<DateTimeOffset, TimeSpan>> WaitForExportedEntries() {
+        public IEnumerable<TimeEntry> WaitForExportedEntries() {
             Console.WriteLine("Waiting for export...");
             var result = WaitUntil(TimeSpan.FromDays(1), () => {
                 Console.WriteLine("Checking for export...");
@@ -80,10 +80,10 @@ namespace MrCooperPsa {
 
             Console.WriteLine($"Found {timecards.Count} timecards");
 
-            var entries = Enumerable.Empty<Tuple<DateTimeOffset, TimeSpan>>();
+            var entries = Enumerable.Empty<TimeEntry>();
 
             foreach (var timecard in timecards) {
-                var timecardEntries = Enumerable.Empty<Tuple<DateTimeOffset, TimeSpan>>();
+                var timecardEntries = Enumerable.Empty<TimeEntry>();
                 char[] digits = Enumerable.Range(0, 10).Select(i => (char)('0' + i)).ToArray();
                 string timecardIdValue = timecard.GetAttribute("id");
                 var id = timecardIdValue.Substring(timecardIdValue.Split(digits)[0].Length);
@@ -93,21 +93,20 @@ namespace MrCooperPsa {
                     var timecardAccount = timecardHeader.FindElement(By.TagName("div")).FindElement(By.ClassName("project-assignment-text")).Text;
                     if (timecardAccount.Contains("Mr. Cooper")) {
                         Console.WriteLine($"Exporting timecard {id} for {timecardAccount}");
-                        timecardEntries = Days.Select((d, i) => {
-                            var inputId = $"{d}{id}1";
-                            Console.WriteLine($"Finding input {inputId}");
-                            var input = Driver.FindElement(By.Id(inputId));
-                            Console.WriteLine($"Found input {inputId}");
-                            var value = input.GetAttribute("value");
-                            Console.WriteLine($"{inputId}.value = {value}");
-                            if (!string.IsNullOrEmpty(value)) {
-                                var hours = double.Parse(value);
-                                var day = startDate.AddDays(i);
-                                Console.WriteLine($"{day.ToString("d")} = {hours} hours");
-                                return Tuple.Create(day, TimeSpan.FromHours(hours));
-                            }
-                            return null;
-                        }).Where(x => null != x).Where(x => x.Item2 != TimeSpan.Zero);
+                        timecardEntries =
+                            from day in Days
+                            let inputId = $"{day}{id}1"
+                            let input = Driver.FindElement(By.Id(inputId))
+                            let value = input.GetAttribute("value")
+                            where !string.IsNullOrEmpty(value)
+                            let duration = TimeSpan.FromHours(double.Parse(value))
+                            where duration != TimeSpan.Zero
+                            select new TimeEntry
+                            {
+                                Date = startDate.AddDays(Array.IndexOf(Days, day)),
+                                Duration = duration,
+                                Project = Project.HomeIntelligence,
+                            };
                     } else {
                         Console.WriteLine($"Skipping timecard {id}");
                     }

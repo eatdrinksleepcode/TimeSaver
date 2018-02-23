@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.UI;
 
 namespace MrCooperPsa {
     public class PsaDriver<TDriver> : DriverWrapper<TDriver>, IPsaDriver where TDriver : IWebDriver, IJavaScriptExecutor {
@@ -12,7 +11,7 @@ namespace MrCooperPsa {
 
         const string dtoToJsDateFormat = "yyyy, M - 1, d";
 
-        public void ExportEntriesToPSA(IEnumerable<Tuple<DateTimeOffset, TimeSpan>> entries) {
+        public void ExportEntriesToPSA(IEnumerable<TimeEntry> entries) {
             var newButtonId = "msdyn_timeentry|NoRelationship|HomePageGrid|Mscrm.HomepageGrid.msdyn_timeentry.NewRecord";
             bool refresh = true;
 
@@ -32,7 +31,7 @@ namespace MrCooperPsa {
                 Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
 
                 Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Item1.ToString(dtoToJsDateFormat)}));
+                    frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Date.ToString(dtoToJsDateFormat)}));
                 ");
                 Thread.Sleep(1000);
                 Driver.SwitchTo().Frame(0);
@@ -42,13 +41,7 @@ namespace MrCooperPsa {
                 Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
                 ");
-                Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
-                        id: ""{{F1FBC909-CC8C-E711-811D-E0071B66DF51}}"",
-                        type: ""10114"",
-                        name: ""Home Intelligence""
-                    }}]);
-                ");
+                SetProject();
                 Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
                         id: ""{{22E5EC7A-86EF-46DF-B392-A97AFD816232}}"",
@@ -57,7 +50,7 @@ namespace MrCooperPsa {
                     }}]);
                 ");
                 Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Item2.TotalMinutes});
+                    frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Duration.TotalMinutes});
                 ");
 
                 WaitUntil(TimeSpan.FromSeconds(10), () => {
@@ -73,6 +66,18 @@ namespace MrCooperPsa {
             }
 
             Driver.FindElement(By.Id("Tabmsdyn_timeentry-main")).Click();
+        }
+
+        private void SetProject()
+        {
+            var project = Project.HomeIntelligence;
+            Driver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
+                        id: ""{{{project.Id}}}"",
+                        type: ""{project.Type}"",
+                        name: ""{project.Name}""
+                    }}]);
+                ");
         }
 
         public void NavigateToDynamicsTimeEntries() {

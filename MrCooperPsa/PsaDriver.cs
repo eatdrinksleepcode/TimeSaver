@@ -131,22 +131,4 @@ namespace MrCooperPsa {
             timeEntriesLink.Click();
         }
     }
-
-    public struct Role
-    {
-        public static readonly Role DeveloperFTCOnshore = new Role
-        {
-            Id = "3F55390A-FEA5-E611-80E1-C4346BAC0910",
-            Name = "Developer FTC Onshore",
-        };
-
-        public static readonly Role DeveloperFTCOffshore = new Role
-        {
-            Id = "57201302-FEA5-E611-80E1-C4346BAC0910",
-            Name = "Developer FTC Offshore",
-        };
-
-        public string Id { get; set; }
-        public string Name { get; set; }
-    }
 }

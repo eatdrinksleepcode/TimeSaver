@@ -16,6 +16,11 @@ namespace MrCooperPsa {
             bool refresh = true;
 
             foreach (var entry in entries) {
+                var project = DeterminePsaProject(entry);
+                if (null == project) {
+                    continue;
+                }
+
                 Driver.ExecuteScript(@"
                     document.getElementById('navBarOverlay').style.display = 'none';
                 ");
@@ -41,14 +46,8 @@ namespace MrCooperPsa {
                 Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
                 ");
-                SetProject();
-                Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
-                        id: ""{{22E5EC7A-86EF-46DF-B392-A97AFD816232}}"",
-                        type: ""10119"",
-                        name: ""4. Development""
-                    }}]);
-                ");
+                SetProject(project.Value);
+                SetTask(project.Value);
                 Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Duration.TotalMinutes});
                 ");
@@ -68,9 +67,20 @@ namespace MrCooperPsa {
             Driver.FindElement(By.Id("Tabmsdyn_timeentry-main")).Click();
         }
 
-        private void SetProject()
+        private void SetTask(Project project)
         {
-            var project = Project.HomeIntelligence;
+            var task = project.DevelopmentTask;
+            Driver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
+                        id: ""{{{task.Id}}}"",
+                        type: ""10119"",
+                        name: ""{task.Name}""
+                    }}]);
+                ");
+        }
+
+        private void SetProject(Project project)
+        {
             Driver.ExecuteScript($@"
                     frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
                         id: ""{{{project.Id}}}"",
@@ -78,6 +88,13 @@ namespace MrCooperPsa {
                         name: ""{project.Name}""
                     }}]);
                 ");
+        }
+
+        private Project? DeterminePsaProject(TimeEntry entry)
+        {
+            return entry.Project.StartsWith("Home Intelligence") ? Project.HomeIntelligence 
+                : entry.Project.StartsWith("MyWay Digital Experience") ? Project.MyWay
+                : (Project?)null;
         }
 
         public void NavigateToDynamicsTimeEntries() {

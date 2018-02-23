@@ -90,7 +90,8 @@ namespace MrCooperPsa {
                 Console.WriteLine($"Inspecting timecard {id}");
                 var timecardHeader = timecard.FindElement(By.ClassName("header-name-for-timecard-entry"));
                 if (timecardHeader.TagName != "span") {
-                    var timecardAccount = timecardHeader.FindElement(By.TagName("div")).FindElement(By.ClassName("project-assignment-text")).Text;
+                    var timecardAccount = timecardHeader.FindElement(By.ClassName("project-assignment-text")).Text;
+                    var timecardProject = timecardHeader.FindElements(By.ClassName("project-assignment-text"))[1].Text;
                     if (timecardAccount.Contains("Mr. Cooper")) {
                         Console.WriteLine($"Exporting timecard {id} for {timecardAccount}");
                         timecardEntries =
@@ -105,7 +106,8 @@ namespace MrCooperPsa {
                             {
                                 Date = startDate.AddDays(Array.IndexOf(Days, day)),
                                 Duration = duration,
-                                Project = Project.HomeIntelligence,
+                                Account = timecardAccount,
+                                Project = timecardProject,
                             };
                     } else {
                         Console.WriteLine($"Skipping timecard {id}");

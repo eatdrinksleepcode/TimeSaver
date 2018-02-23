@@ -7,6 +7,6 @@ namespace MrCooperPsa
         void NavigateToTimeworks();
         void SignInToTimeworks();
         void AddExportElementToPage();
-        IEnumerable<Tuple<DateTimeOffset, TimeSpan>> WaitForExportedEntries();
+        IEnumerable<TimeEntry> WaitForExportedEntries();
     }
 }

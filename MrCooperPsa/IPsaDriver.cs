@@ -5,6 +5,6 @@ namespace MrCooperPsa
 {
     public interface IPsaDriver : IDriverWrapper {
         void NavigateToDynamicsTimeEntries();
-        void ExportEntriesToPSA(IEnumerable<Tuple<DateTimeOffset, TimeSpan>> entries);
+        void ExportEntriesToPSA(IEnumerable<TimeEntry> entries);
     }
 }

@@ -5,6 +5,7 @@ using OpenQA.Selenium;
 
 namespace MrCooperPsa {
     public class PsaDriver<TDriver> : DriverWrapper<TDriver>, IPsaDriver where TDriver : IWebDriver, IJavaScriptExecutor {
+        private const string XrmPageJs = "frames[0].Xrm.Page";
 
         public PsaDriver(TDriver driver) : base(driver) {
         }
@@ -35,26 +36,20 @@ namespace MrCooperPsa {
                 }
                 Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
 
-                Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_date').setValue(new Date({entry.Date.ToString(dtoToJsDateFormat)}));
-                ");
+                SetXrmAttribute("msdyn_date", $"new Date({entry.Date.ToString(dtoToJsDateFormat)})");
                 Thread.Sleep(1000);
                 Driver.SwitchTo().Frame(0);
                 Driver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);
                 Driver.SwitchTo().DefaultContent();
                 Thread.Sleep(1000);
-                Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_type').setValue(171700002);
-                ");
+                SetXrmAttribute("msdyn_type", 171700002);
                 SetProject(project.Value);
                 SetTask(project.Value);
-                Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_duration').setValue({entry.Duration.TotalMinutes});
-                ");
+                SetXrmAttribute("msdyn_duration", entry.Duration.TotalMinutes);
 
                 WaitUntil(TimeSpan.FromSeconds(10), () => {
                     return Driver.ExecuteScript($@"
-                        return frames[0].Xrm.Page.getAttribute('msdyn_resourcecategory').getValue() != null;
+                        return {XrmPageJs}.getAttribute('msdyn_resourcecategory').getValue() != null;
                     ");
                 });
 
@@ -70,24 +65,50 @@ namespace MrCooperPsa {
         private void SetTask(Project project)
         {
             var task = project.DevelopmentTask;
-            Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_projecttask').setValue([{{
-                        id: ""{{{task.Id}}}"",
-                        type: ""10119"",
-                        name: ""{task.Name}""
-                    }}]);
-                ");
+            SetXrmAttribute(
+                "msdyn_projecttask",
+                new Entity {
+                    Id = task.Id,
+                    Type = "10119",
+                    Name = task.Name,
+                },
+                true);
+        }
+
+        private struct Entity {
+            public string Id { get; set; }
+            public string Type { get; set; }
+            public string Name { get; set; }
         }
 
         private void SetProject(Project project)
         {
+            SetXrmAttribute(
+                "msdyn_project",
+                new Entity {
+                    Id = project.Id,
+                    Type = project.Type,
+                    Name = project.Name,
+                },
+                true);
+        }
+        
+        private void SetXrmAttribute<T>(string attributeName, T value) {
             Driver.ExecuteScript($@"
-                    frames[0].Xrm.Page.getAttribute('msdyn_project').setValue([{{
-                        id: ""{{{project.Id}}}"",
-                        type: ""{project.Type}"",
-                        name: ""{project.Name}""
-                    }}]);
-                ");
+                {XrmPageJs}.getAttribute('{attributeName}').setValue({value});
+            ");
+        }
+
+        private void SetXrmAttribute(string attributeName, Entity entity, bool isArray = false) {
+            var jsEntity = $@"{{
+                id: ""{{{entity.Id}}}"",
+                type: ""{entity.Type}"",
+                name: ""{entity.Name}""
+            }}";
+            if (isArray) {
+                jsEntity = $@"[{jsEntity}]";
+            }
+            SetXrmAttribute(attributeName, jsEntity);
         }
 
         private Project? DeterminePsaProject(TimeEntry entry)

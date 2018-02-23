@@ -6,6 +6,7 @@ namespace MrCooperPsa
     {
         public DateTimeOffset Date { get; set; }
         public TimeSpan Duration { get; set; }
-        public Project Project { get; set; }
+        public string Account { get; set; }
+        public string Project { get; set; }
     }
 }

@@ -57,6 +57,8 @@ namespace MrCooperPsa {
                         return frames[0].Xrm.Page.getAttribute('msdyn_resourcecategory').getValue() != null;
                     ");
                 });
+                
+//                SetRole();
 
                 var saveButton = Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
                 saveButton.Click();
@@ -86,6 +88,17 @@ namespace MrCooperPsa {
                         id: ""{{{project.Id}}}"",
                         type: ""{project.Type}"",
                         name: ""{project.Name}""
+                    }}]);
+                ");
+        }
+
+        private void SetRole()
+        {
+            Driver.ExecuteScript($@"
+                    frames[0].Xrm.Page.getAttribute('msdyn_resourcecategory').setValue([{{
+                        id: ""{{{Role.DeveloperFTCOnshore.Id}}}"",
+                        type: ""1147"",
+                        name: ""{Role.DeveloperFTCOnshore.Name}""
                     }}]);
                 ");
         }
@@ -130,5 +143,23 @@ namespace MrCooperPsa {
             var timeEntriesLink = Driver.FindElement(By.Id("msdyn_timeentry"));
             timeEntriesLink.Click();
         }
+    }
+
+    public struct Role
+    {
+        public static readonly Role DeveloperFTCOnshore = new Role
+        {
+            Id = "3F55390A-FEA5-E611-80E1-C4346BAC0910",
+            Name = "Developer FTC Onshore",
+        };
+
+        public static readonly Role DeveloperFTCOffshore = new Role
+        {
+            Id = "57201302-FEA5-E611-80E1-C4346BAC0910",
+            Name = "Developer FTC Offshore",
+        };
+
+        public string Id { get; set; }
+        public string Name { get; set; }
     }
 }

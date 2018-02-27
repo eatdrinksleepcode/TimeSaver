@@ -13,6 +13,7 @@ namespace MrCooperPsa {
     class Program : IDisposable {
         private IPsaDriver dynamicsDriver;
         private ITimeworksDriver timeworksDriver;
+        private IConfigDriver configDriver;
 
         static void Main(string[] args) {
             using (var p = new Program()) {
@@ -21,7 +22,7 @@ namespace MrCooperPsa {
             }
         }
 
-        private static Size? FindScreenSize() {
+        private static Rect? FindScreenSize() {
             var process = Process.Start(new ProcessStartInfo {
                 FileName = "system_profiler",
                 Arguments = "SPDisplaysDataType",
@@ -39,8 +40,13 @@ namespace MrCooperPsa {
                                 .Select(size => size.Value))
                             .ToArray();
 
+            const int systemBarHeight = 25;
             if(sizes.Length == 2) {
-                return new Size(sizes[0], sizes[1]);
+                return new Rect {
+                    Position = new Point(0, systemBarHeight),
+                    // WTF: screen size is twice as large as actual in both dimensions??
+                    Size = new Size(sizes[0] / 2, (sizes[1] / 2) - systemBarHeight)
+                };
             } else {
                 return null;
             }
@@ -68,35 +74,42 @@ namespace MrCooperPsa {
             var screenSize = FindScreenSize();
 
             if(null != screenSize) {
-                var position = new Point(0, 0);
-                // WTF: screen size is twice as large as actual in both dimensions??
-                var middleWidth = screenSize.Value.Width / 4;
-                var size = new Size(middleWidth, screenSize.Value.Height / 2);
+                const int configHeight = 250;
+                var (top, bottom) = screenSize.Value.SliceBottom(configHeight);
+                var (left, right) = top.SplitVertical();
 
-                timeworksDriver.SetScreenSize(position, size);
-                dynamicsDriver.SetScreenSize(new Point(middleWidth, 0), size);
+                timeworksDriver.SetScreenSize(left.Position, left.Size);
+                dynamicsDriver.SetScreenSize(right.Position, right.Size);
+                configDriver.SetScreenSize(bottom.Position, bottom.Size);
             }
         }
 
         private void InitializeFirefoxDrivers() {
+            var options = CreateFirefoxOptions();
+            dynamicsDriver = new PsaDriver<FirefoxDriver>(CreateFirefoxDriver(options));
+            timeworksDriver = new TimeworksDriver<FirefoxDriver>(CreateFirefoxDriver(options));
+            configDriver = new ConfigDriver<FirefoxDriver>(CreateFirefoxDriver(options));
+        }
+
+        private static FirefoxOptions CreateFirefoxOptions() {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             System.IO.Directory.SetCurrentDirectory(Path.GetDirectoryName(typeof(Program).Assembly.Location));
             var firefoxProfileDir = FirefoxDefaultProfileDirectory;;
-            dynamicsDriver = new PsaDriver<FirefoxDriver>(CreateFirefoxDriver(firefoxProfileDir));
-            timeworksDriver = new TimeworksDriver<FirefoxDriver>(CreateFirefoxDriver(firefoxProfileDir));
-        }
-
-        private static FirefoxDriver CreateFirefoxDriver(string firefoxProfileDir) {
             var options = new FirefoxOptions();
             options.LogLevel = FirefoxDriverLogLevel.Warn;
             if (null != firefoxProfileDir) {
                 options.Profile = new FirefoxProfile(firefoxProfileDir);
             }
 
+            return options;
+        }
+
+        private static FirefoxDriver CreateFirefoxDriver(FirefoxOptions options) {
             try {
                 return new FirefoxDriver(options);
             }
             catch (Exception ex) {
+                Console.Error.WriteLine(ex.Message);
                 Console.Error.WriteLine("Failed to create driver with default profile; is Firefox already running?");
                 Console.Error.WriteLine("Attempting to start driver with temp profile");
                 return new FirefoxDriver();
@@ -125,9 +138,13 @@ namespace MrCooperPsa {
             var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
             timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
+            configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
         }
 
         private void Run() {
+            var configTask = configDriver.WaitForSave();
+
+            configDriver.NavigateToConfigPage();
             dynamicsDriver.NavigateToDynamicsTimeEntries();
             ExtractEntriesFromTimeworks();
         }

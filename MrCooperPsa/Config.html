@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TimeSaver Config</title>
+    <script>
+        
+        function setConfig(config) {
+            var browsers = Array.from(document.getElementsByName('Browser'));
+            var browser = browsers.find(b => b.value === config.Browser);
+            if (browser) {
+                browser.checked = true;
+            }
+        }
+        
+        function getConfig() {
+            var browsers = Array.from(document.getElementsByName('Browser'));
+            var browser = browsers.find(b => b.checked).value;
+            var result = {
+                browser : browser,
+            };
+            return result;
+        }
+
+        function doSave() {
+            document.readyToSave = true;
+        }
+        
+        function saveComplete() {
+            document.readyToSave = false;
+        }
+    </script>
+</head>
+<body>
+    <form onsubmit="event.preventDefault(); doSave(); return false;">
+        <div>
+            Browser:
+        </div>
+        <div>
+            <label for="browser-chrome">Chrome:</label>
+            <input name="Browser" id="browser-chrome" type="radio" value="Chrome"/>
+            <label for="browser-firefox">Firefox:</label>
+            <input name="Browser" id="browser-firefox" type="radio" value="Firefox"/>
+        </div>
+        <div>
+            <button type="submit">Save</button>
+        </div>
+    </form>
+</body>
+</html>

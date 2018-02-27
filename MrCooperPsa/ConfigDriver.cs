@@ -39,6 +39,7 @@ namespace MrCooperPsa {
                             var configFromBrowser = Driver.ExecuteJavaScript<IDictionary<string, object>>("return getConfig()");
                             var newConfig = new Config {
                                 Browser = (string)configFromBrowser["browser"],
+                                Role = (string)configFromBrowser["role"],
                             };
                             configRepo.SaveConfig(newConfig);
                             Driver.ExecuteJavaScript("saveComplete()");

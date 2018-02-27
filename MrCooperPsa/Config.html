@@ -11,13 +11,21 @@
             if (browser) {
                 browser.checked = true;
             }
+            var roles = Array.from(document.getElementsByName('Role'));
+            var role = roles.find(r => r.value === config.Role);
+            if (role) {
+                role.checked = true;
+            }
         }
         
         function getConfig() {
             var browsers = Array.from(document.getElementsByName('Browser'));
             var browser = browsers.find(b => b.checked).value;
+            var roles = Array.from(document.getElementsByName('Role'));
+            var role = roles.find(r => r.checked).value;
             var result = {
                 browser : browser,
+                role: role
             };
             return result;
         }
@@ -41,6 +49,15 @@
             <input name="Browser" id="browser-chrome" type="radio" value="Chrome"/>
             <label for="browser-firefox">Firefox:</label>
             <input name="Browser" id="browser-firefox" type="radio" value="Firefox"/>
+        </div>
+        <div>
+            Role:
+        </div>
+        <div>
+            <label for="role-dev-onshore">Developer FTC Onshore</label>
+            <input name="Role" id="role-dev-onshore" type="radio" value="Developer FTC Onshore"/>
+            <label for="role-dev-offshore">Developer FTC Offshore</label>
+            <input name="Role" id="role-dev-offshore" type="radio" value="Developer FTC Offshore"/>
         </div>
         <div>
             <button type="submit">Save</button>

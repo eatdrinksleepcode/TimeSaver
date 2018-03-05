@@ -54,12 +54,16 @@ namespace MrCooperPsa {
 
                         if (!cancelled.IsCancellationRequested) {
                             Console.WriteLine("Saving config");
-                            var newConfig = Driver.ExecuteJavaScript<IDictionary<string, object>>("return getConfig()");
+                            var configFromBrowser = Driver.ExecuteJavaScript<IDictionary<string, object>>("return getConfig()");
+                            var oldConfig = config;
                             config = new Config {
-                                Browser = (string)newConfig["browser"],
+                                Browser = (string)configFromBrowser["browser"],
                             };
                             SaveConfig();
                             Driver.ExecuteJavaScript("saveComplete()");
+                            if (oldConfig.Browser != config.Browser) {
+                                return;
+                            }
                         }
                     }
                 }, cancelled

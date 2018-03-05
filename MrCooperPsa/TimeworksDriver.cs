@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using OpenQA.Selenium;
 
 namespace MrCooperPsa {
@@ -53,7 +54,7 @@ namespace MrCooperPsa {
             ");
         }
 
-        public IEnumerable<TimeEntry> WaitForExportedEntries() {
+        public IEnumerable<TimeEntry> WaitForExportedEntries(CancellationToken cancellation) {
             Console.WriteLine("Waiting for export...");
             var result = WaitUntil(TimeSpan.FromDays(1), () => {
                 Console.WriteLine("Checking for export...");
@@ -64,7 +65,7 @@ namespace MrCooperPsa {
                     }
                     return false;
                 ");
-            });
+            }, cancellation);
 
             var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
 

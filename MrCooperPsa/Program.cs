@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 
@@ -16,10 +17,12 @@ namespace MrCooperPsa {
         private IConfigDriver configDriver;
 
         static void Main(string[] args) {
-            using (var p = new Program()) {
-                p.Run();
-                Console.ReadLine();
-            }
+            bool restart;
+            do {
+                using (var p = new Program()) {
+                    restart = p.Run();
+                }
+            } while (restart);
         }
 
         private static Rect? FindScreenSize() {
@@ -141,32 +144,40 @@ namespace MrCooperPsa {
             configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
         }
 
-        private void Run() {
-            var configTask = configDriver.WaitForSave();
-
+        private bool Run() {
+            CancellationTokenSource cancellation = new CancellationTokenSource();
+            
             configDriver.NavigateToConfigPage();
-            dynamicsDriver.NavigateToDynamicsTimeEntries();
-            ExtractEntriesFromTimeworks();
-        }
+            var configTask = configDriver.WaitForSave(cancellation.Token).ContinueWith(t => {
+                cancellation.Cancel();
+            });
 
-        private void ExtractEntriesFromTimeworks() {
+            dynamicsDriver.NavigateToDynamicsTimeEntries();
             timeworksDriver.NavigateToTimeworks();
             timeworksDriver.SignInToTimeworks();
             timeworksDriver.AddExportElementToPage();
 
             while (true) {
-                var entries = timeworksDriver.WaitForExportedEntries();
                 try {
-                    dynamicsDriver.ExportEntriesToPSA(entries);
-                    Console.WriteLine("Done exporting");
-                } catch(Exception ex) {
-                    Console.Error.WriteLine(ex);
-                    Console.WriteLine("Error occurred during export. Please return to the time entry screen in PSA before trying again.");
+                    var entries = timeworksDriver.WaitForExportedEntries(cancellation.Token);
+                    try {
+                        dynamicsDriver.ExportEntriesToPSA(entries);
+                        Console.WriteLine("Done exporting");
+                    }
+                    catch (Exception ex) {
+                        Console.Error.WriteLine(ex);
+                        Console.WriteLine(
+                            "Error occurred during export. Please return to the time entry screen in PSA before trying again.");
+                    }
+                }
+                catch (OperationCanceledException ex) {
+                    return true;
                 }
             }
         }
 
         public void Dispose() {
+            configDriver.Dispose();
             dynamicsDriver.Dispose();
             timeworksDriver.Dispose();
         }

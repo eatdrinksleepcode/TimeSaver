@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 
@@ -25,10 +26,14 @@ namespace MrCooperPsa {
             window.Size = size;
         }
 
-        protected T WaitUntil<T>(TimeSpan timeout, Func<T> until) {
+        protected T WaitUntil<T>(TimeSpan timeout, Func<T> until, CancellationToken cancellation = default(CancellationToken)) {
             return new DefaultWait<TDriver>(Driver) {
                 Timeout = timeout
-            }.Until(d => until());
+            }.Until(d => {
+                var result = until();
+                cancellation.ThrowIfCancellationRequested();
+                return result;
+            });
         }
     }
 }

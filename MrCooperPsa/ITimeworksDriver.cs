@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace MrCooperPsa
 {
@@ -7,6 +8,6 @@ namespace MrCooperPsa
         void NavigateToTimeworks();
         void SignInToTimeworks();
         void AddExportElementToPage();
-        IEnumerable<TimeEntry> WaitForExportedEntries();
+        IEnumerable<TimeEntry> WaitForExportedEntries(CancellationToken cancellation);
     }
 }

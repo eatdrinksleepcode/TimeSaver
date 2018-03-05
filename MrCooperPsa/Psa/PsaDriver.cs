@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using OpenQA.Selenium;
 
-namespace MrCooperPsa {
+namespace MrCooperPsa.Psa {
     public class PsaDriver<TDriver> : DriverWrapper<TDriver>, IPsaDriver where TDriver : IWebDriver, IJavaScriptExecutor {
         private const string XrmPageJs = "frames[0].Xrm.Page";
 

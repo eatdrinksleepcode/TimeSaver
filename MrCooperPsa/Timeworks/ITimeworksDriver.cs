@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 
-namespace MrCooperPsa
+namespace MrCooperPsa.Timeworks
 {
     public interface ITimeworksDriver : IDriverWrapper {
         System.Threading.Tasks.Task NavigateToTimeworks(CancellationToken cancellation);

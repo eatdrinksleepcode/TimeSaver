@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using MrCooperPsa.Psa;
+using MrCooperPsa.Timeworks;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Firefox;
 

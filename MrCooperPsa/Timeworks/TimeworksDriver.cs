@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading;
 using OpenQA.Selenium;
 
-namespace MrCooperPsa {
+namespace MrCooperPsa.Timeworks {
     public class TimeworksDriver<TDriver> : DriverWrapper<TDriver>, ITimeworksDriver where TDriver : IWebDriver, IJavaScriptExecutor {
         private static readonly string[] Days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 

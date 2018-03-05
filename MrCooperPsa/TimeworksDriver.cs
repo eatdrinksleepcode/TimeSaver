@@ -11,47 +11,53 @@ namespace MrCooperPsa {
         public TimeworksDriver(TDriver driver) : base(driver) {
         }
 
-        public void NavigateToTimeworks() {
-            Driver.Navigate().GoToUrl("https://thoughtworks.lightning.force.com/c/TimecardApp.app");
+        public System.Threading.Tasks.Task NavigateToTimeworks(CancellationToken cancellation) {
+            return System.Threading.Tasks.Task.Run(() => {
+                Driver.Navigate().GoToUrl("https://thoughtworks.lightning.force.com/c/TimecardApp.app");
+            }, cancellation);
         }
 
-        public void SignInToTimeworks() {
-            var twUsername = System.Environment.GetEnvironmentVariable("TW_USERNAME");
-            var twPassword = System.Environment.GetEnvironmentVariable("TW_PASSWORD");
+        public System.Threading.Tasks.Task SignInToTimeworks(CancellationToken cancellation) {
+            return System.Threading.Tasks.Task.Run(() => {
+                var twUsername = System.Environment.GetEnvironmentVariable("TW_USERNAME");
+                var twPassword = System.Environment.GetEnvironmentVariable("TW_PASSWORD");
 
-            if (!string.IsNullOrEmpty(twUsername)) {
-                Console.WriteLine($"TW username found ({twUsername}). Logging in...");
+                if (!string.IsNullOrEmpty(twUsername)) {
+                    Console.WriteLine($"TW username found ({twUsername}). Logging in...");
 
-                var usernameInput = Driver.FindElement(By.Id("okta-signin-username"));
-                usernameInput.SendKeys(twUsername);
+                    var usernameInput = Driver.FindElement(By.Id("okta-signin-username"));
+                    usernameInput.SendKeys(twUsername);
 
-                var passwordInput = Driver.FindElement(By.Id("okta-signin-password"));
-                passwordInput.SendKeys(twPassword);
+                    var passwordInput = Driver.FindElement(By.Id("okta-signin-password"));
+                    passwordInput.SendKeys(twPassword);
 
-                var signInButton = Driver.FindElement(By.Id("okta-signin-submit"));
-                signInButton.Click();
+                    var signInButton = Driver.FindElement(By.Id("okta-signin-submit"));
+                    signInButton.Click();
             } else {
-                Console.WriteLine($"TW username not found. Please log in.");
-            }
+                    Console.WriteLine($"TW username not found. Please log in.");
+                }
+            }, cancellation);
         }
 
-        public void AddExportElementToPage() {
-            var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
-            Driver.ExecuteScript(@"
-                const dateDisplayDiv = document.getElementsByClassName(""date-display"")[0];
-                dateDisplayDiv.style.cssText = dateDisplayDiv.style.cssText + ""; position: relative"";
-
-                const exportButton = document.createElement(""img"");
-                exportButton.id = ""export-to-psa"";
-                exportButton.src = ""https://media.glassdoor.com/sql/1748022/mr-cooper-squarelogo-1503336704472.png"";
-                exportButton.alt = ""Export To PSA"";
-                exportButton.style.cssText = ""position: absolute; left: -45px; width: 40px"";
-                exportButton.onclick = function() {
-                    document.exportToPSA = true;
-                    return false;
-                };
-                dateDisplayDiv.insertBefore(exportButton);
-            ");
+        public System.Threading.Tasks.Task AddExportElementToPage(CancellationToken cancellation) {
+            return System.Threading.Tasks.Task.Run(() => {
+                var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
+                Driver.ExecuteScript(@"
+                    const dateDisplayDiv = document.getElementsByClassName(""date-display"")[0];
+                    dateDisplayDiv.style.cssText = dateDisplayDiv.style.cssText + ""; position: relative"";
+    
+                    const exportButton = document.createElement(""img"");
+                    exportButton.id = ""export-to-psa"";
+                    exportButton.src = ""https://media.glassdoor.com/sql/1748022/mr-cooper-squarelogo-1503336704472.png"";
+                    exportButton.alt = ""Export To PSA"";
+                    exportButton.style.cssText = ""position: absolute; left: -45px; width: 40px"";
+                    exportButton.onclick = function() {
+                        document.exportToPSA = true;
+                        return false;
+                    };
+                    dateDisplayDiv.insertBefore(exportButton);
+                ");
+            }, cancellation);
         }
 
         public IEnumerable<TimeEntry> WaitForExportedEntries(CancellationToken cancellation) {

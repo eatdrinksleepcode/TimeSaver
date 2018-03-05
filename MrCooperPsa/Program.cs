@@ -158,10 +158,10 @@ namespace MrCooperPsa {
                 cancellation.Cancel();
             });
 
-            dynamicsDriver.NavigateToDynamicsTimeEntries();
-            timeworksDriver.NavigateToTimeworks();
-            timeworksDriver.SignInToTimeworks();
-            timeworksDriver.AddExportElementToPage();
+            System.Threading.Tasks.Task.WaitAll(
+                dynamicsDriver.NavigateToDynamicsTimeEntries(cancellation.Token),
+                PrepareTimeworks(cancellation.Token)
+            );
 
             while (true) {
                 try {
@@ -180,6 +180,12 @@ namespace MrCooperPsa {
                     return true;
                 }
             }
+        }
+
+        private async System.Threading.Tasks.Task PrepareTimeworks(CancellationToken cancellation) {
+            await timeworksDriver.NavigateToTimeworks(cancellation);
+            await timeworksDriver.SignInToTimeworks(cancellation);
+            await timeworksDriver.AddExportElementToPage(cancellation);
         }
 
         public void Dispose() {

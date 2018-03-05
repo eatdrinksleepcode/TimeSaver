@@ -5,9 +5,9 @@ using System.Threading;
 namespace MrCooperPsa
 {
     public interface ITimeworksDriver : IDriverWrapper {
-        void NavigateToTimeworks();
-        void SignInToTimeworks();
-        void AddExportElementToPage();
+        System.Threading.Tasks.Task NavigateToTimeworks(CancellationToken cancellation);
+        System.Threading.Tasks.Task SignInToTimeworks(CancellationToken cancellation);
+        System.Threading.Tasks.Task AddExportElementToPage(CancellationToken cancellation);
         IEnumerable<TimeEntry> WaitForExportedEntries(CancellationToken cancellation);
     }
 }

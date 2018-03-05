@@ -118,38 +118,40 @@ namespace MrCooperPsa {
                 : (Project?)null;
         }
 
-        public void NavigateToDynamicsTimeEntries() {
-            Driver.Navigate().GoToUrl("https://cooper.crm.dynamics.com/main.aspx");
+        public System.Threading.Tasks.Task NavigateToDynamicsTimeEntries(CancellationToken cancellation) {
+            return System.Threading.Tasks.Task.Run(() => {
+                Driver.Navigate().GoToUrl("https://cooper.crm.dynamics.com/main.aspx");
 
-            var mrCooperEmail = System.Environment.GetEnvironmentVariable("MRCOOPER_EMAIL");
-            var mrCooperPassword = System.Environment.GetEnvironmentVariable("MRCOOPER_PASSWORD");
+                var mrCooperEmail = System.Environment.GetEnvironmentVariable("MRCOOPER_EMAIL");
+                var mrCooperPassword = System.Environment.GetEnvironmentVariable("MRCOOPER_PASSWORD");
 
-            if (!string.IsNullOrEmpty(mrCooperEmail)) {
-                Console.WriteLine($"Mr Cooper email found ({mrCooperEmail}). Logging in...");
+                if (!string.IsNullOrEmpty(mrCooperEmail)) {
+                    Console.WriteLine($"Mr Cooper email found ({mrCooperEmail}). Logging in...");
 
-                var emailInput = Driver.FindElement(By.Name("loginfmt"));
-                emailInput.SendKeys(mrCooperEmail);
+                    var emailInput = Driver.FindElement(By.Name("loginfmt"));
+                    emailInput.SendKeys(mrCooperEmail);
 
-                var nextButton = Driver.FindElement(By.Id("idSIButton9"));
-                nextButton.Click();
+                    var nextButton = Driver.FindElement(By.Id("idSIButton9"));
+                    nextButton.Click();
 
-                var passwordInput = Driver.FindElement(By.Id("passwordInput"));
-                passwordInput.SendKeys(mrCooperPassword);
+                    var passwordInput = Driver.FindElement(By.Id("passwordInput"));
+                    passwordInput.SendKeys(mrCooperPassword);
 
-                var submitButton = Driver.FindElement(By.Id("submitButton"));
-                submitButton.Click();
+                    var submitButton = Driver.FindElement(By.Id("submitButton"));
+                    submitButton.Click();
 
-                var dontSaveId = Driver.FindElement(By.Id("idBtn_Back"));
-                dontSaveId.Click();
+                    var dontSaveId = Driver.FindElement(By.Id("idBtn_Back"));
+                    dontSaveId.Click();
             } else {
-                Console.WriteLine("Mr Cooper email not found. Please log in.");
-            }
+                    Console.WriteLine("Mr Cooper email not found. Please log in.");
+                }
 
-            var projectServiceArrow = Driver.FindElement(By.Id("TabSI")).FindElement(By.TagName("a"));
-            projectServiceArrow.Click();
+                var projectServiceArrow = Driver.FindElement(By.Id("TabSI")).FindElement(By.TagName("a"));
+                projectServiceArrow.Click();
 
-            var timeEntriesLink = Driver.FindElement(By.Id("msdyn_timeentry"));
-            timeEntriesLink.Click();
+                var timeEntriesLink = Driver.FindElement(By.Id("msdyn_timeentry"));
+                timeEntriesLink.Click();
+            }, cancellation);
         }
     }
 }

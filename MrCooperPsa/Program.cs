@@ -12,6 +12,7 @@ using OpenQA.Selenium.Firefox;
 
 namespace MrCooperPsa {
     class Program : IDisposable {
+        private readonly ConfigRepository configRepo;
         private IPsaDriver dynamicsDriver;
         private ITimeworksDriver timeworksDriver;
         private IConfigDriver configDriver;
@@ -63,15 +64,20 @@ namespace MrCooperPsa {
         }
 
         private Program() {
+            
+            configRepo = new ConfigRepository();
 
-            var browserPreference = System.Environment.GetEnvironmentVariable("TW_MRC_BROWSER");
+            var config = configRepo.LoadConfig();
 
-            if ("FIREFOX".Equals(browserPreference, StringComparison.OrdinalIgnoreCase)) {
+            if ("FIREFOX".Equals(config.Browser, StringComparison.OrdinalIgnoreCase)) {
                 InitializeFirefoxDrivers();
-            } else if("CHROME".Equals(browserPreference, StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(browserPreference)) {
-                InitializeChromeDrivers();
             } else {
-                throw new Exception($"Invalid environment variable 'TW_MRC_BROWSER': '{browserPreference}'");
+                if (string.IsNullOrEmpty(config.Browser)) {
+                    Console.WriteLine($"No existing browser setting. Using default: 'CHROME'.");
+                } else if (!"CHROME".Equals(config.Browser, StringComparison.OrdinalIgnoreCase)) {
+                    Console.WriteLine($"Invalid browser setting: '{config.Browser}'. Falling back to default: 'CHROME'.");
+                }
+                InitializeChromeDrivers();
             }
 
             var screenSize = FindScreenSize();
@@ -91,7 +97,7 @@ namespace MrCooperPsa {
             var options = CreateFirefoxOptions();
             dynamicsDriver = new PsaDriver<FirefoxDriver>(CreateFirefoxDriver(options));
             timeworksDriver = new TimeworksDriver<FirefoxDriver>(CreateFirefoxDriver(options));
-            configDriver = new ConfigDriver<FirefoxDriver>(CreateFirefoxDriver(options));
+            configDriver = new ConfigDriver<FirefoxDriver>(CreateFirefoxDriver(options), configRepo);
         }
 
         private static FirefoxOptions CreateFirefoxOptions() {
@@ -141,7 +147,7 @@ namespace MrCooperPsa {
             var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
             timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
-            configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
+            configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options), configRepo);
         }
 
         private bool Run() {

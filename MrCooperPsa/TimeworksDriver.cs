@@ -56,16 +56,14 @@ namespace MrCooperPsa {
 
         public IEnumerable<TimeEntry> WaitForExportedEntries(CancellationToken cancellation) {
             Console.WriteLine("Waiting for export...");
-            var result = WaitUntil(TimeSpan.FromDays(1), () => {
-                Console.WriteLine("Checking for export...");
-                return (bool)Driver.ExecuteScript(@"
+            WaitUntil(TimeSpan.FromDays(1), () =>
+                (bool)Driver.ExecuteScript(@"
                     if(document.exportToPSA) {
                         document.exportToPSA = false;
                         return true;
                     }
                     return false;
-                ");
-            }, cancellation);
+                "), cancellation);
 
             var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
 

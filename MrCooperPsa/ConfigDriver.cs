@@ -8,30 +8,10 @@ using OpenQA.Selenium.Support.Extensions;
 
 namespace MrCooperPsa {
     public class ConfigDriver<T> : DriverWrapper<T>, IConfigDriver where T : IWebDriver, IJavaScriptExecutor {
+        private readonly ConfigRepository configRepo;
 
-        private Config config;
-
-        public ConfigDriver(T driver) : base(driver) {
-            LoadConfig();
-        }
-
-        private void LoadConfig() {
-            var configFile = GetConfigFilePath();
-            if (File.Exists(configFile)) {
-                config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(configFile));
-                Console.WriteLine($"Config file loaded from {GetConfigFilePath()}");
-            }
-        }
-
-        private void SaveConfig() {
-            var configFilePath = GetConfigFilePath();
-            Directory.CreateDirectory(Path.GetDirectoryName(configFilePath));
-            File.WriteAllText(configFilePath, JsonConvert.SerializeObject(config));
-            Console.WriteLine($"Config file saved to {configFilePath}");
-        }
-
-        private static string GetConfigFilePath() {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TimeSaver", "config");
+        public ConfigDriver(T driver, ConfigRepository configRepo) : base(driver) {
+            this.configRepo = configRepo;
         }
 
         public void NavigateToConfigPage() {
@@ -42,6 +22,7 @@ namespace MrCooperPsa {
         }
 
         private void SetConfigOnPage() {
+            var config = configRepo.LoadConfig();
             Driver.ExecuteJavaScript($"setConfig({JsonConvert.SerializeObject(config)})");
         }
 
@@ -50,28 +31,24 @@ namespace MrCooperPsa {
                     while (!cancelled.IsCancellationRequested) {
                         WaitUntil(TimeSpan.FromDays(1), () => (bool) Driver.ExecuteScript(@"
                             return document.readyToSave || false;
-                        ") || cancelled.IsCancellationRequested);
+                        "), cancelled);
 
                         if (!cancelled.IsCancellationRequested) {
                             Console.WriteLine("Saving config");
+                            var oldConfig = configRepo.LoadConfig();
                             var configFromBrowser = Driver.ExecuteJavaScript<IDictionary<string, object>>("return getConfig()");
-                            var oldConfig = config;
-                            config = new Config {
+                            var newConfig = new Config {
                                 Browser = (string)configFromBrowser["browser"],
                             };
-                            SaveConfig();
+                            configRepo.SaveConfig(newConfig);
                             Driver.ExecuteJavaScript("saveComplete()");
-                            if (oldConfig.Browser != config.Browser) {
+                            if (oldConfig.Browser != newConfig.Browser) {
                                 return;
                             }
                         }
                     }
                 }, cancelled
             );
-        }
-
-        struct Config {
-            public string Browser { get; set; }
         }
     }
 }

@@ -147,9 +147,9 @@ namespace MrCooperPsa {
             //options.AddArgument("--profile-directory=Default");
 
             var chromeDriverDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
-            timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options));
-            configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options), configRepo);
+            dynamicsDriver = new PsaDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options, TimeSpan.FromDays(1)));
+            timeworksDriver = new TimeworksDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options, TimeSpan.FromDays(1)));
+            configDriver = new ConfigDriver<ChromeDriver>(new ChromeDriver(chromeDriverDir, options, TimeSpan.FromDays(1)), configRepo);
         }
 
         private bool Run() {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using OpenQA.Selenium;
 
@@ -36,7 +37,7 @@ namespace MrCooperPsa.Psa {
                 }
                 Driver.FindElement(By.Id("msdyn_timeentry|NoRelationship|Form|Mscrm.Form.msdyn_timeentry.Save")).FindElement(By.TagName("a")).FindElement(By.TagName("span"));
 
-                SetXrmAttribute("msdyn_date", $"new Date({entry.Date.ToString(dtoToJsDateFormat)})");
+                SetXrmAttribute("msdyn_date", $"new Date({entry.Date.ToString(dtoToJsDateFormat, CultureInfo.CurrentCulture)})");
                 Thread.Sleep(1000);
                 Driver.SwitchTo().Frame(0);
                 Driver.FindElement(By.Id("msdyn_date_iDateInput")).SendKeys(Keys.Return);

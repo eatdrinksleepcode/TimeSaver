@@ -1,4 +1,4 @@
-﻿using System;
+﻿using NodaTime;
 using OpenQA.Selenium.Chrome;
 using Xunit;
 
@@ -8,7 +8,7 @@ namespace MrCooperPsa.Timeworks {
         public void StartDateDst() {
             var startDate = TimeworksDriver<ChromeDriver>.FindStartDate("29 Oct");
 
-            Assert.Equal(new DateTimeOffset(2018, 10, 29, 0, 0, 0, TimeSpan.Zero), startDate);
+            Assert.Equal(new LocalDate(2018, 10, 29), startDate);
         }
     }
 }

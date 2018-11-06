@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
+using NodaTime;
 using OpenQA.Selenium;
 
 namespace MrCooperPsa.Timeworks {
@@ -73,7 +75,7 @@ namespace MrCooperPsa.Timeworks {
 
             var startDate = FindStartDate();
 
-            Console.WriteLine($"Exporting starting at {startDate.ToString("d")}");
+            Console.WriteLine($"Exporting starting at {startDate.ToString("d", CultureInfo.CurrentCulture)}");
 
             var timecards = Driver.FindElements(By.ClassName("timecard-entry"));
 
@@ -103,7 +105,7 @@ namespace MrCooperPsa.Timeworks {
                             where duration != TimeSpan.Zero
                             select new TimeEntry
                             {
-                                Date = startDate.AddDays(Array.IndexOf(Days, day)),
+                                Date = startDate.PlusDays(Array.IndexOf(Days, day)),
                                 Duration = duration,
                                 Account = timecardAccount,
                                 Project = timecardProject,
@@ -118,25 +120,25 @@ namespace MrCooperPsa.Timeworks {
             return entries;
         }
 
-        private DateTimeOffset FindStartDate() {
+        private LocalDate FindStartDate() {
             var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
             var dateDisplayText = dateDisplay.Text;
             return FindStartDate(dateDisplayText);
         }
 
-        public static DateTimeOffset FindStartDate(string dateDisplayText) {
+        public static LocalDate FindStartDate(string dateDisplayText) {
             var startDateParts = dateDisplayText.Split(" - ").First().Split(" ");
             var monthAbbreviation = startDateParts[1];
             var startMonth = GetMonthIndexFromAbbreviation(monthAbbreviation);
-            var startDate = new DateTimeOffset(2018, startMonth, int.Parse(startDateParts[0]), 0, 0, 0, TimeSpan.Zero);
+            var startDate = new LocalDate(2018, startMonth, int.Parse(startDateParts[0]));
             return startDate;
         }
 
         private static int GetMonthIndexFromAbbreviation(string monthAbbreviation) {
             int startMonth;
             for (startMonth = 1; startMonth <= 12; startMonth++) {
-                var tempDate = new DateTimeOffset(2018, startMonth, 1, 0, 0, 0, TimeSpan.Zero);
-                if (tempDate.ToString("MMM") == monthAbbreviation)
+                var tempDate = new LocalDate(2018, startMonth, 1);
+                if (tempDate.ToString("MMM", CultureInfo.CurrentCulture) == monthAbbreviation)
                     break;
             }
 

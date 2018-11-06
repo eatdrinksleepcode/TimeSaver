@@ -71,13 +71,7 @@ namespace MrCooperPsa.Timeworks {
                     return false;
                 "), cancellation);
 
-            var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
-
-            var startDateParts = dateDisplay.Text.Split(" - ").First().Split(" ");
-            var startDate = new DateTimeOffset(2018, 1, int.Parse(startDateParts[0]), 0, 0, 0, TimeSpan.Zero);
-            while (startDate.ToString("MMM") != startDateParts[1]) {
-                startDate = startDate.AddMonths(1);
-            }
+            var startDate = FindStartDate();
 
             Console.WriteLine($"Exporting starting at {startDate.ToString("d")}");
 
@@ -122,6 +116,31 @@ namespace MrCooperPsa.Timeworks {
             }
 
             return entries;
+        }
+
+        private DateTimeOffset FindStartDate() {
+            var dateDisplay = Driver.FindElement(By.ClassName("date-display"));
+            var dateDisplayText = dateDisplay.Text;
+            return FindStartDate(dateDisplayText);
+        }
+
+        public static DateTimeOffset FindStartDate(string dateDisplayText) {
+            var startDateParts = dateDisplayText.Split(" - ").First().Split(" ");
+            var monthAbbreviation = startDateParts[1];
+            var startMonth = GetMonthIndexFromAbbreviation(monthAbbreviation);
+            var startDate = new DateTimeOffset(2018, startMonth, int.Parse(startDateParts[0]), 0, 0, 0, TimeSpan.Zero);
+            return startDate;
+        }
+
+        private static int GetMonthIndexFromAbbreviation(string monthAbbreviation) {
+            int startMonth;
+            for (startMonth = 1; startMonth <= 12; startMonth++) {
+                var tempDate = new DateTimeOffset(2018, startMonth, 1, 0, 0, 0, TimeSpan.Zero);
+                if (tempDate.ToString("MMM") == monthAbbreviation)
+                    break;
+            }
+
+            return startMonth;
         }
     }
 }

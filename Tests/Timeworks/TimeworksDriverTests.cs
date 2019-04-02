@@ -8,7 +8,7 @@ namespace MrCooperPsa.Timeworks {
         public void StartDateDst() {
             var startDate = TimeworksDriver<ChromeDriver>.FindStartDate("29 Oct");
 
-            Assert.Equal(new LocalDate(2018, 10, 29), startDate);
+            Assert.Equal(new LocalDate(2019, 10, 29), startDate);
         }
     }
 }

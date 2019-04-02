@@ -130,14 +130,14 @@ namespace MrCooperPsa.Timeworks {
             var startDateParts = dateDisplayText.Split(" - ").First().Split(" ");
             var monthAbbreviation = startDateParts[1];
             var startMonth = GetMonthIndexFromAbbreviation(monthAbbreviation);
-            var startDate = new LocalDate(2018, startMonth, int.Parse(startDateParts[0]));
+            var startDate = new LocalDate(2019, startMonth, int.Parse(startDateParts[0]));
             return startDate;
         }
 
         private static int GetMonthIndexFromAbbreviation(string monthAbbreviation) {
             int startMonth;
             for (startMonth = 1; startMonth <= 12; startMonth++) {
-                var tempDate = new LocalDate(2018, startMonth, 1);
+                var tempDate = new LocalDate(2019, startMonth, 1);
                 if (tempDate.ToString("MMM", CultureInfo.CurrentCulture) == monthAbbreviation)
                     break;
             }

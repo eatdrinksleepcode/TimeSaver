@@ -114,7 +114,7 @@ namespace MrCooperPsa.Psa {
 
         private Project? DeterminePsaProject(TimeEntry entry)
         {
-            return entry.Project.StartsWith("Home Intelligence") ? Project.HomeIntelligence 
+            return entry.Project.StartsWith("Home Intelligence") || entry.Project.StartsWith("HI") ? Project.HomeIntelligence 
                 : entry.Project.StartsWith("MyWay Digital Experience") ? Project.MyWay
                 : (Project?)null;
         }
